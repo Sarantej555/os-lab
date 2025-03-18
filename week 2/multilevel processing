@@ -1,0 +1,87 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Define the structure for Process
+struct Process {
+    int bt, wt, tat, pno;
+    char prio;
+};
+
+typedef struct Process Process;  // Define alias for Process
+
+// Function to swap two Process structures
+void swap(Process* a, Process* b) {
+    Process temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Function to sort processes based on priority (foreground first, then background)
+void sortonprio(int n, Process p[]) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            // If the process at j is background and the process at j+1 is foreground, swap
+            if ((p[j].prio == 'B' || p[j].prio == 'b') && (p[j + 1].prio == 'F' || p[j + 1].prio == 'f')) {
+                swap(&p[j], &p[j + 1]);
+            }
+        }
+    }
+}
+
+// Function to calculate waiting time and turnaround time
+void MLQS(int n, Process p[], float* avgtat, float* avgwt) {
+    sortonprio(n, p);  // Sort based on priority
+
+    *avgwt = 0.0;
+    *avgtat = 0.0;
+
+    // Calculate waiting time and turnaround time for each process
+    for (int i = 0; i < n; i++) {
+        if (i == 0) {
+            p[i].wt = 0;  // First process has 0 waiting time
+        } else {
+            p[i].wt = p[i - 1].wt + p[i - 1].bt;  // Waiting time is previous process' burst time
+        }
+        p[i].tat = p[i].wt + p[i].bt;  // Turnaround time = waiting time + burst time
+        *avgwt += p[i].wt;
+        *avgtat += p[i].tat;
+    }
+
+    *avgwt /= n;  // Average waiting time
+    *avgtat /= n;  // Average turnaround time
+}
+
+int main() {
+    int num;
+
+    printf("Enter the number of processes: ");
+    scanf("%d", &num);
+
+    Process p[num];  // Declare an array of structures to hold the processes
+
+    // Input burst time and priority for each process
+    for (int i = 0; i < num; i++) {
+        printf("Enter the process number for process : ");
+        scanf("%d", &p[i].pno);
+        printf("Enter the burst time for process %d in milliseconds: ", i + 1);
+        scanf("%d", &p[i].bt);
+        printf("Enter whether process %d is foreground or background (F for foreground, B for background): ", i + 1);
+        scanf(" %c", &p[i].prio);  // The space before %c handles any leftover newline character
+    }
+
+    float averagewt, averagetat;
+    MLQS(num, p, &averagetat, &averagewt);  // Call MLQS to calculate waiting and turnaround times
+
+    // Print results
+    printf("\nThe times after computation are:\n");
+    printf("PROCESS\tBURST TIME\tTURN AROUND TIME\tWAITING TIME\n");
+    for (int i = 0; i < num; i++) {
+        printf("%d\t\t%d\t\t%d\t\t%d\n", p[i].pno, p[i].bt, p[i].tat, p[i].wt);
+    }
+
+    // Print average times
+    printf("\nThe Average Turn Around Time is: %.3f ms", averagetat);
+    printf("\nThe Average Waiting Time is: %.3f ms", averagewt);
+
+    return 0;
+}
